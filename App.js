@@ -7,7 +7,6 @@ import Toast from "react-native-toast-message";
 import SplashScreen from "./screens/SplashScreen";
 import Signup from "./screens/Signup";
 import Signin from "./screens/Signin";
-import WelcomeScreen from "./screens/WelcomeScreen";
 import { CreateHabitScreen } from "./screens/CreateHabitScreen";
 import { HabitListScreen } from "./screens/HabitListScreen";
 
@@ -25,7 +24,6 @@ const App = () => {
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Signup" component={Signup} />
           <Stack.Screen name="Signin" component={Signin} />
-          <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
           <Stack.Screen
             name="CreateHabit"
             component={CreateHabitScreen}

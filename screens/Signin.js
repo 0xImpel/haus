@@ -8,20 +8,20 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   Keyboard,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { app } from "../firebaseConfig";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import Icon from "react-native-vector-icons/FontAwesome"; // Import the icon library
 
 const auth = getAuth(app);
 
 const Signin = ({ route }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // State to control password visibility
   const [errors, setErrors] = useState({ email: "", password: "" });
   const params = route.params;
   const navigation = useNavigation();
@@ -32,7 +32,10 @@ const Signin = ({ route }) => {
       setErrors((prev) => ({ ...prev, email: "Email is required." }));
       return false;
     } else if (!emailPattern.test(email)) {
-      setErrors((prev) => ({ ...prev, email: "Please enter a valid email address." }));
+      setErrors((prev) => ({
+        ...prev,
+        email: "Please enter a valid email address.",
+      }));
       return false;
     }
     setErrors((prev) => ({ ...prev, email: "" }));
@@ -54,10 +57,14 @@ const Signin = ({ route }) => {
     if (!isEmailValid || !isPasswordValid) return;
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
       if (user) {
-        navigation.navigate("WelcomeScreen");
+        navigation.navigate("CreateHabit");
       }
     } catch (error) {
       console.log(error);
@@ -70,52 +77,74 @@ const Signin = ({ route }) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.header}>
-              <Image
-                source={require("../assets/images/LogoHabitTracking.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.signinTitle}>Sign In</Text>
-            </View>
-
-            <Text style={styles.subtitle}>Welcome back! Sign in to your account</Text>
+          <View style={styles.containers}>
+            <Text style={styles.signinTitle}>Login</Text>
 
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder="Email or Username"
               placeholderTextColor="#aaa"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               onBlur={() => validateEmail(email)}
             />
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#aaa"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              onBlur={() => validatePassword(password)}
-            />
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#aaa"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword} // Conditionally hide/show the password
+                onBlur={() => validatePassword(password)}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword((prev) => !prev)} // Toggle visibility
+              >
+                <Icon
+                  name={showPassword ? "eye-slash" : "eye"}
+                  size={20}
+                  color="#808080"
+                />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-              <Text style={styles.continueButtonText}>Sign In</Text>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
+
+            <Text style={styles.ForgotPass}>Forgot Password?</Text>
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Login</Text>
             </TouchableOpacity>
+          </View>
 
-            <Text style={styles.footer}>
-              Don’t have an account?
-              <Text style={styles.signupText} onPress={navigateToSignUp}> Sign Up</Text>
-            </Text>
-          </ScrollView>
+          <View style={styles.footerContainer}>
+            <View style={styles.footerTextWrapper}>
+              <Text style={styles.footer}>
+                New here?
+                <Text style={styles.Create} onPress={navigateToSignUp}>
+                  {" "}
+                  Create an account
+                </Text>
+              </Text>
+            </View>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -123,39 +152,60 @@ const Signin = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  scrollContainer: { paddingHorizontal: 20, paddingTop: 20 },
-  header: { alignItems: "center", justifyContent: "center" },
-  logo: {
-    width: 150,
-    height: 150,
-    marginTop: 35,
-    marginBottom: -10,
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  containers: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
   signinTitle: {
     fontSize: 25,
-    fontWeight: "700",
-    color: "#000",
-    fontFamily: "Poppins",
-    marginBottom: 10,
+    marginTop: 120,
+    fontWeight: "500",
+    fontFamily: "Poppins_900Bold",
+    color: "#808080",
+    marginBottom: 25,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
+  ForgotPass: {
+    fontSize: 14,
+    color: "#808080",
+    left: 8,
     fontFamily: "Poppins",
     marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#808080",
+    alignSelf: "flex-start",
   },
   input: {
     fontFamily: "Poppins",
     width: "100%",
     height: 53,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
     paddingHorizontal: 15,
-    marginBottom: 15,
     fontSize: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    marginBottom: 15,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 4,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderTopWidth: 0,
+    borderColor: "#ddd",
+  },
+  passwordContainer: {
+    position: "relative",
+    width: "100%",
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 15,
+    top: 15,
   },
   errorText: {
     color: "red",
@@ -164,27 +214,37 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   continueButton: {
-    backgroundColor: "#2A9F85",
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#D3D3D3",
+    alignSelf: "flex-end",
+    marginRight: 20,
   },
   continueButtonText: {
-    color: "#fff",
+    color: "#808080",
+    fontFamily: "Poppins_600SemiBold",
     fontSize: 16,
-    fontFamily: "Poppins",
+  },
+  footerContainer: {
+    position: "absolute",
+    bottom: 40,
+    top: 700,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  footerTextWrapper: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#808080",
   },
   footer: {
-    fontSize: 14,
-    color: "#333",
-    textAlign: "center",
-    marginTop: 15,
-    fontFamily: "Poppins",
+    color: "#808080",
   },
-  signupText: {
-    color: "#2A9F85",
+  Create: {
+    color: "#000000",
     fontFamily: "Poppins",
   },
 });

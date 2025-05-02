@@ -11,243 +11,244 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image, // added this
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { app } from "../firebaseConfig";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
 
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-const Signup = ({ route }) => {
-  const [fullName, setFullName] = useState("");
+const Signup = () => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const params = route.params;
-  const [errors, setErrors] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-  });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState({});
   const navigation = useNavigation();
 
-  const validateFullName = (name) => {
-    if (!name.trim()) {
-      setErrors((prev) => ({ ...prev, fullName: "Please enter your full name." }));
-      return false;
-    }
-    setErrors((prev) => ({ ...prev, fullName: "" }));
-    return true;
-  };
+  const validateFields = () => {
+    let valid = true;
+    let newErrors = {};
 
-  const validateEmail = (email) => {
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!firstName.trim()) {
+      newErrors.firstName = "First name is required.";
+      valid = false;
+    }
+    if (!lastName.trim()) {
+      newErrors.lastName = "Last name is required.";
+      valid = false;
+    }
     if (!email.trim()) {
-      setErrors((prev) => ({ ...prev, email: "Email is required." }));
-      return false;
-    } else if (!emailPattern.test(email)) {
-      setErrors((prev) => ({ ...prev, email: "Please enter a valid email address." }));
-      return false;
+      newErrors.email = "Email is required.";
+      valid = false;
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+      newErrors.email = "Please enter a valid email.";
+      valid = false;
     }
-    setErrors((prev) => ({ ...prev, email: "" }));
-    return true;
-  };
-
-  const validatePhone = (phone) => {
-    if (!phone.trim()) {
-      setErrors((prev) => ({ ...prev, phone: "Phone number is required." }));
-      return false;
-    } else if (phone.length !== 11) {
-      setErrors((prev) => ({ ...prev, phone: "Phone number must be exactly 11 digits." }));
-      return false;
-    }
-    setErrors((prev) => ({ ...prev, phone: "" }));
-    return true;
-  };
-
-  const validatePassword = (password) => {
     if (!password.trim()) {
-      setErrors((prev) => ({ ...prev, password: "Password is required." }));
-      return false;
-    } else if (password.length < 6) {
-      setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters." }));
-      return false;
+      newErrors.password = "Password is required.";
+      valid = false;
     }
-    setErrors((prev) => ({ ...prev, password: "" }));
-    return true;
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
   };
 
-  const handleContinue = async () => {
-    const isFullNameValid = validateFullName(fullName);
-    const isEmailValid = validateEmail(email);
-    const isPhoneValid = validatePhone(phone);
-    const isPasswordValid = validatePassword(password);
-    if (!isFullNameValid || !isEmailValid || !isPhoneValid || !isPasswordValid) return;
+  const handleCreateAccount = async () => {
+    if (!validateFields()) return;
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      if (user) {
-        const userType = params.data.selectedUser;
-        await setDoc(doc(db, userType, user.uid), {
-          fullName: fullName,
-          phone: phone,
-          email: email,
-          createdAt: new Date(),
-        });
-        navigation.navigate("WelcomeScreen");
-      }
+      await createUserWithEmailAndPassword(auth, email, password);
+      Alert.alert("Success", "Account created successfully!");
+      navigation.navigate("CreateHabit"); 
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "User already exists or invalid details.");
+      Alert.alert("Error", error.message);
     }
   };
-
-  const navigateToSignIn = () => { navigation.navigate("Signin", params); };
-
+  const navigateToSignIn = () => {
+    navigation.navigate("Signin");
+  };
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.header}>
-              <Image
-                source={require("../assets/images/LogoHabitTracking.png")} // update path as needed
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.signupTitle}>Sign Up</Text>
-            </View>
+        <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Sign Up</Text>
 
-            <Text style={styles.subtitle}>Welcome! Create a new account</Text>
-
+            <Text style={styles.label}>First Name</Text>
             <TextInput
               style={styles.input}
-              placeholder="Full Name"
-              placeholderTextColor="#aaa"
-              value={fullName}
-              onChangeText={setFullName}
-              onBlur={() => validateFullName(fullName)}
+              placeholder="John"
+              value={firstName}
+              onChangeText={setFirstName}
             />
-            {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
+            {errors.firstName && (
+              <Text style={styles.error}>{errors.firstName}</Text>
+            )}
 
+            <Text style={styles.label}>Last Name</Text>
             <TextInput
               style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#aaa"
+              placeholder="Doe"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+            {errors.lastName && (
+              <Text style={styles.error}>{errors.lastName}</Text>
+            )}
+
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="johndoe@outlook.de"
+              keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
-              keyboardType="email-address"
-              onBlur={() => validateEmail(email)}
             />
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Phone"
-              placeholderTextColor="#aaa"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              onBlur={() => validatePhone(phone)}
-            />
-            {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#aaa"
+              placeholder="Enter password"
+              secureTextEntry
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
-              onBlur={() => validatePassword(password)}
             />
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            {errors.password && (
+              <Text style={styles.error}>{errors.password}</Text>
+            )}
 
-            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-              <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.label}>Confirm Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Re-enter password"
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+            {errors.confirmPassword && (
+              <Text style={styles.error}>{errors.confirmPassword}</Text>
+            )}
+
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={handleCreateAccount}
+            >
+              <Text style={styles.createButtonText}>Create Account</Text>
             </TouchableOpacity>
-
-            <Text style={styles.footer}>
-              Already have an account?
-              <Text style={styles.loginText} onPress={navigateToSignIn}> Log In</Text>
-            </Text>
-          </ScrollView>
-        </View>
+            <View style={styles.footerLine}>
+              <Text style={styles.Create}>
+                Already have an account?{" "}
+                <Text onPress={navigateToSignIn} style={styles.login}>
+                  Login
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  scrollContainer: { paddingHorizontal: 20, paddingTop: 20 },
-  header: { alignItems: "center", justifyContent: "center" },
-  logo: {
-    width: 150,
-    height: 150,
-    marginTop: 35,
-    marginBottom: -10,
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
   },
-  signupTitle: {
-    fontSize: 25,
-    fontWeight: "700",
-    color: "#000",
+  scrollViewContainer: {
+    padding: 22,
+    paddingTop: 50,
+    paddingBottom: 80,
+  },
+  formContainer: {
+    flex: 1,
+  },
+  title: {
+    marginTop: 40,
+    fontSize: 24,
+    fontWeight: "600",
+    color: "#808080",
+    marginBottom: 30,
+    fontFamily: "Poppins_900Bold",
+  },
+  label: {
+    fontSize: 14,
     fontFamily: "Poppins",
+    color: "#333",
     marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    fontFamily: "Poppins",
-    marginBottom: 20,
   },
   input: {
     fontFamily: "Poppins",
     width: "100%",
     height: 53,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
     paddingHorizontal: 15,
-    marginBottom: 15,
     fontSize: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    marginBottom: 15,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 4,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderTopWidth: 0,
+    borderColor: "#ddd",
   },
-  errorText: {
+  error: {
     color: "red",
     fontSize: 12,
     fontFamily: "Poppins",
     marginBottom: 10,
   },
-
-  continueButton: {
-    backgroundColor: "#2A9F85",
+  createButton: {
+    backgroundColor: "#fff",
+    borderColor: "#D3D3D3",
+    borderWidth: 1,
     borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
+    alignSelf: "flex-end", // align to right
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
-  continueButtonText: {
-    color: "#fff",
+  createButtonText: {
+    color: "#808080",
+    fontFamily: "Poppins_600SemiBold",
     fontSize: 16,
-    fontFamily: "Poppins",
   },
-  footer: {
+
+  footerLine: {
+    marginTop: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: "#D3D3D3",
+    alignItems: "center",
+    width: "65%", // or adjust
+    alignSelf: "center",
+  },
+
+  Create: {
     fontSize: 14,
-    color: "#333",
-    textAlign: "center",
-    marginTop: 15,
     fontFamily: "Poppins",
+    color: "#000000",
   },
-  loginText: {
-    color: "#2A9F85",
+  login: {
+    fontSize: 14,
     fontFamily: "Poppins",
+    color: "#000000",
+    fontWeight: "600",
   },
 });
 

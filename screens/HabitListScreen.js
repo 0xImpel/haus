@@ -3,8 +3,8 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native
 import { useNavigation } from '@react-navigation/native';
 
 const habits = [
-  { id: '1', title: 'Train BJJ', time: '45min' },
-  { id: '2', title: 'Read', time: '30min' },
+  { id: '1', title: 'I will Train BJJ', time: '45min' },
+  { id: '2', title: 'i will learn Science', time: '30min' },
 ];
 
 export function HabitListScreen() {
@@ -12,7 +12,7 @@ export function HabitListScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Habits</Text>
+      <Text style={styles.title}>habits</Text>
 
       <FlatList
         data={habits}
@@ -58,19 +58,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular',
   },
   addButton: {
-    position: 'absolute',
-    bottom: 30,
-    left: 30,
-    backgroundColor: '#2A9F85',
-    borderRadius: 25,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
   },
   addText: {
-    color: '#fff',
-    fontSize: 26,
+    color: '#808080',
+    fontWeight: '400',
+    fontSize: 16,
   },
 });
 

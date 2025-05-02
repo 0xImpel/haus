@@ -54,7 +54,7 @@ const CalendarPicker = ({ onDayPress, selectedDays, onClose, title }) => {
 
 // Duration picker component
 const DurationPicker = ({ onDurationSelected, onClose }) => {
-  const [selectedDuration, setSelectedDuration] = useState('30');
+  const [selectedDuration, setSelectedDuration] = useState('365');
   
   const durations = ['7', '14', '30', '60', '90', '180', '365'];
   
@@ -180,7 +180,6 @@ export function CreateHabitScreen() {
   const [selectedDays, setSelectedDays] = useState([]);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [durationSelected, setDurationSelected] = useState(true); // Default to true for "365 days"
   
   const canFinish = habit.length > 0;
   
@@ -199,13 +198,6 @@ export function CreateHabitScreen() {
   
   const minutes = calculateMinutes();
   
-  // Format selected days for display
-  const formatSelectedDays = () => {
-    if (days === 'everyday') return 'everyday';
-    if (selectedDays.length === 0) return '(chosen days)';
-    return selectedDays.join(', ');
-  };
-  
   // Add habit function
   const addHabit = () => {
     // Here you would add the habit to your storage/database
@@ -215,21 +207,22 @@ export function CreateHabitScreen() {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.skip}>Skip</Text>
+
       <Text style={styles.title}>Create habit</Text>
       
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>I will </Text>
         <TextInput
           style={styles.input}
-          placeholder="train BJJ"
+          placeholder="train BJJ..."
           value={habit}
           onChangeText={setHabit}
           placeholderTextColor="#999"
         />
       </View>
 
-      {/* Added Select Time label */}
-      <Text style={styles.sectionLabel}>Select Time:</Text>
+      <Text style={styles.sectionLabel}>set time</Text>
       
       <View style={styles.timeRow}>
         <TouchableOpacity 
@@ -239,7 +232,6 @@ export function CreateHabitScreen() {
           <Text style={styles.timeSelectorText}>
             {fromTime || 'from'}
           </Text>
-          <View style={styles.underline} />
         </TouchableOpacity>
         
         <Text style={styles.timeSeparator}>-</Text>
@@ -251,7 +243,6 @@ export function CreateHabitScreen() {
           <Text style={styles.timeSelectorText}>
             {toTime || 'to'}
           </Text>
-          <View style={styles.underline} />
         </TouchableOpacity>
       </View>
 
@@ -282,34 +273,32 @@ export function CreateHabitScreen() {
         <TouchableOpacity
           style={[
             styles.optionButton, 
-            styles.durationButton,
-            durationSelected && styles.optionButtonActive
+            duration === '365' && styles.optionButtonActive
           ]}
           onPress={() => {
-            setDurationSelected(true);
+            setDuration('365');
           }}
         >
           <Text style={[
             styles.optionText,
-            durationSelected && styles.optionTextActive
+            duration === '365' && styles.optionTextActive
           ]}>
-            {duration} days
+            365 days
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[
             styles.optionButton,
-            !durationSelected && styles.optionButtonActive
+            duration !== '365' && styles.optionButtonActive
           ]}
           onPress={() => {
-            setDurationSelected(false);
             setShowDurationPicker(true);
           }}
         >
           <Text style={[
             styles.optionText,
-            !durationSelected && styles.optionTextActive
+            duration !== '365' && styles.optionTextActive
           ]}>
             select duration
           </Text>
@@ -318,14 +307,14 @@ export function CreateHabitScreen() {
 
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryText}>
-          I will {habit || 'train BJJ'} for {minutes}min on {formatSelectedDays()} for {duration === '365' ? '(chosen duration)' : duration + ' days'}
+          I will {habit || 'train BJJ'} for {minutes}min {days === 'everyday' ? 'everyday' : 'on selected days'} for {duration} days
         </Text>
         
         <TouchableOpacity 
           style={styles.addHabitButton}
           onPress={addHabit}
         >
-          <Text style={styles.addHabitText}>Add Habit</Text>
+          <Text style={styles.addHabitText}>add habit +</Text>
         </TouchableOpacity>
       </View>
 
@@ -393,10 +382,7 @@ export function CreateHabitScreen() {
       >
         <View style={styles.modalOverlay}>
           <DurationPicker 
-            onDurationSelected={(newDuration) => {
-              setDuration(newDuration);
-              setDurationSelected(true); // Mark the duration button as selected after choosing
-            }}
+            onDurationSelected={setDuration}
             onClose={() => setShowDurationPicker(false)}
           />
         </View>
@@ -408,114 +394,118 @@ export function CreateHabitScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 30,
+    padding: 20,
     backgroundColor: '#fff',
   },
+  skip: {
+    marginTop: 20,
+    alignSelf: 'flex-end',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+  },
   title: {
-    marginTop: 30,
-    fontSize: 25,
-    fontWeight: "700",
-    fontFamily: "Poppins",
-    color: '#2A9F85',
+    fontSize: 24,
+    fontWeight: '400',
+    color: '#666',
+    marginTop: 40,
     marginBottom: 40,
-    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center', // this aligns them vertically
-    marginBottom: 20,
+    alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    paddingBottom: 5,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 8,
+    marginBottom: 30,
   },
   inputLabel: {
-    fontSize: 20,
-    color: '#666',
+    fontSize: 16,
+    color: '#000',
   },
   input: {
     flex: 1,
-    fontSize: 20,
-    color: '#333',
-    borderBottomWidth: 0,
+    fontSize: 16,
+    color: '#000',
     padding: 0,
   },
-  // Added section label style
   sectionLabel: {
-    fontSize: 19,
-    color: '#666',
+    fontSize: 16,
+    color: '#808080',
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
     marginBottom: 15,
   },
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 25,
   },
   timeSelector: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 5,
     flex: 1,
   },
   timeSelectorText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#999',
   },
   timeSeparator: {
     marginHorizontal: 10,
     color: '#999',
   },
-  underline: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginTop: 8,
-  },
   optionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 15,
+    gap: 20,
   },
   optionButton: {
     paddingVertical: 8,
     paddingHorizontal: 15,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#eee',
-    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
     minWidth: 100,
     alignItems: 'center',
   },
   optionButtonActive: {
-    backgroundColor: '#2A9F85',
-    borderColor: '#2A9F85',
-  },
-  durationButton: {
-    minWidth: 80,
+    backgroundColor: '#000',
   },
   optionText: {
     fontSize: 14,
-    color: '#999',
+    color: '#666',
   },
   optionTextActive: {
     color: '#fff',
   },
   summaryContainer: {
-    marginTop: 60,
+    marginTop: 20,
     marginBottom: 20,
   },
   summaryText: {
     fontSize: 14,
     color: '#666',
-    lineHeight: 22,
+    lineHeight: 20,
     marginBottom: 20,
   },
   addHabitButton: {
-    backgroundColor: '#2A9F85',
-    paddingVertical: 12,
-    borderRadius: 20,
-    alignItems: 'center',
-    paddingHorizontal: 5,
     marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
   },
   addHabitText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#808080',
+    fontWeight: '400',
     fontSize: 16,
   },
   buttonContainer: {
@@ -525,15 +515,14 @@ const styles = StyleSheet.create({
   },
   finishButton: {
     alignSelf: 'flex-end',
-    backgroundColor: '#fff',
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 15,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2A9F85',
+    borderColor: '#000',
   },
   finishText: {
-    color: '#2A9F85',
+    color: '#000',
     fontSize: 14,
   },
   // Modal styles
@@ -554,7 +543,7 @@ const styles = StyleSheet.create({
   timePickerTitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#2A9F85',
+    color: '#000',
     marginBottom: 20,
   },
   timePickerContent: {
@@ -579,7 +568,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedTimeOption: {
-    backgroundColor: '#e6f5f1', // Light teal
+    backgroundColor: '#F5F5F5',
     borderRadius: 5,
   },
   timeOptionText: {
@@ -587,7 +576,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   selectedTimeOptionText: {
-    color: '#2A9F85',
+    color: '#000',
     fontWeight: '500',
   },
   timePickerSeparator: {
@@ -599,8 +588,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#2A9F85',
-    borderRadius: 20,
+    backgroundColor: '#000',
+    borderRadius: 10,
   },
   confirmTimeText: {
     color: '#fff',
@@ -617,7 +606,7 @@ const styles = StyleSheet.create({
   calendarTitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#2A9F85',
+    color: '#000',
     marginBottom: 20,
   },
   weekdaysContainer: {
@@ -628,16 +617,13 @@ const styles = StyleSheet.create({
   dayButton: {
     margin: 5,
     padding: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#eee',
-    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
     width: 50,
     alignItems: 'center',
   },
   selectedDayButton: {
-    backgroundColor: '#2A9F85',
-    borderColor: '#2A9F85',
+    backgroundColor: '#000',
   },
   dayButtonText: {
     color: '#666',
@@ -650,8 +636,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#2A9F85',
-    borderRadius: 20,
+    backgroundColor: '#000',
+    borderRadius: 10,
   },
   doneButtonText: {
     color: '#fff',
@@ -668,7 +654,7 @@ const styles = StyleSheet.create({
   durationPickerTitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#2A9F85',
+    color: '#000',
     marginBottom: 20,
   },
   durationOptionsContainer: {
@@ -681,22 +667,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedDurationOption: {
-    backgroundColor: '#e6f5f1', // Light teal
+    backgroundColor: '#F5F5F5',
   },
   durationOptionText: {
     fontSize: 16,
     color: '#666',
   },
   selectedDurationOptionText: {
-    color: '#2A9F85',
+    color: '#000',
     fontWeight: '500',
   },
   confirmDurationButton: {
     marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#2A9F85',
-    borderRadius: 20,
+    backgroundColor: '#000',
+    borderRadius: 10,
   },
   confirmDurationText: {
     color: '#fff',
