@@ -1,46 +1,71 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Modal,
-  ScrollView
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+"use client"
 
-// Mock calendar component - you would replace this with a real calendar library
-const CalendarPicker = ({ onDayPress, selectedDays, onClose, title }) => {
-  // This is a simplified mock - you would use a real calendar component
-  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  
+import { useState } from "react"
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  SafeAreaView,
+  Alert,
+  ActivityIndicator,
+} from "react-native"
+import { useNavigation } from "@react-navigation/native"
+import { getFirestore, collection, addDoc } from "firebase/firestore"
+import { getAuth } from "firebase/auth"
+
+// Modal for selecting days
+const DaysSelector = ({ selectedDays, onDayPress, onClose }) => {
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
   const toggleDay = (day) => {
     if (selectedDays.includes(day)) {
-      onDayPress(selectedDays.filter(d => d !== day));
+      onDayPress(selectedDays.filter((d) => d !== day))
     } else {
-      onDayPress([...selectedDays, day]);
+      onDayPress([...selectedDays, day])
     }
-  };
-  
+  }
+
   return (
-    <View style={styles.calendarContainer}>
-      <Text style={styles.calendarTitle}>{title}</Text>
-      <View style={styles.weekdaysContainer}>
-        {weekdays.map(day => (
-          <TouchableOpacity 
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Select days</Text>
+      <View style={styles.daysGrid}>
+        {weekdays.map((day) => (
+          <TouchableOpacity
             key={day}
-            style={[
-              styles.dayButton,
-              selectedDays.includes(day) && styles.selectedDayButton
-            ]}
+            style={[styles.dayButton, selectedDays.includes(day) && styles.selectedDayButton]}
             onPress={() => toggleDay(day)}
           >
-            <Text style={[
-              styles.dayButtonText,
-              selectedDays.includes(day) && styles.selectedDayText
-            ]}>
-              {day}
+            <Text style={[styles.dayButtonText, selectedDays.includes(day) && styles.selectedDayText]}>{day}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <TouchableOpacity style={styles.doneButton} onPress={onClose}>
+        <Text style={styles.doneButtonText}>Done</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+// Modal for selecting duration
+const DurationSelector = ({ selectedDuration, onDurationSelected, onClose }) => {
+  const durations = ["21 days", "90 days", "180 days", "270 days"]
+
+  return (
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Set duration</Text>
+      <View style={styles.durationGrid}>
+        {durations.map((duration) => (
+          <TouchableOpacity
+            key={duration}
+            style={[styles.durationButton, selectedDuration === duration && styles.selectedDurationButton]}
+            onPress={() => onDurationSelected(duration)}
+          >
+            <Text style={[styles.durationButtonText, selectedDuration === duration && styles.selectedDurationText]}>
+              {duration}
             </Text>
           </TouchableOpacity>
         ))}
@@ -49,643 +74,943 @@ const CalendarPicker = ({ onDayPress, selectedDays, onClose, title }) => {
         <Text style={styles.doneButtonText}>Done</Text>
       </TouchableOpacity>
     </View>
-  );
-};
-
-// Duration picker component
-const DurationPicker = ({ onDurationSelected, onClose }) => {
-  const [selectedDuration, setSelectedDuration] = useState('365');
-  
-  const durations = ['7', '14', '30', '60', '90', '180', '365'];
-  
-  const confirmDuration = () => {
-    onDurationSelected(selectedDuration);
-    onClose();
-  };
-  
-  return (
-    <View style={styles.durationPickerContainer}>
-      <Text style={styles.durationPickerTitle}>Select Duration</Text>
-      
-      <View style={styles.durationOptionsContainer}>
-        {durations.map(d => (
-          <TouchableOpacity 
-            key={d} 
-            style={[
-              styles.durationOption,
-              selectedDuration === d && styles.selectedDurationOption
-            ]}
-            onPress={() => setSelectedDuration(d)}
-          >
-            <Text style={[
-              styles.durationOptionText,
-              selectedDuration === d && styles.selectedDurationOptionText
-            ]}>
-              {d} days
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      
-      <TouchableOpacity style={styles.confirmDurationButton} onPress={confirmDuration}>
-        <Text style={styles.confirmDurationText}>Confirm</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-// Time picker component
-const TimePicker = ({ title, onTimeSelected, onClose }) => {
-  const [hour, setHour] = useState('08');
-  const [minute, setMinute] = useState('00');
-  
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-  
-  const confirmTime = () => {
-    onTimeSelected(`${hour}:${minute}`);
-    onClose();
-  };
-  
-  return (
-    <View style={styles.timePickerContainer}>
-      <Text style={styles.timePickerTitle}>{title}</Text>
-      
-      <View style={styles.timePickerContent}>
-        <View style={styles.timePickerColumn}>
-          <Text style={styles.timePickerLabel}>Hour</Text>
-          <ScrollView style={styles.timePickerScroll} showsVerticalScrollIndicator={false}>
-            {hours.map(h => (
-              <TouchableOpacity 
-                key={h} 
-                style={[
-                  styles.timeOption,
-                  hour === h && styles.selectedTimeOption
-                ]}
-                onPress={() => setHour(h)}
-              >
-                <Text style={[
-                  styles.timeOptionText,
-                  hour === h && styles.selectedTimeOptionText
-                ]}>
-                  {h}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-        
-        <Text style={styles.timePickerSeparator}>:</Text>
-        
-        <View style={styles.timePickerColumn}>
-          <Text style={styles.timePickerLabel}>Minute</Text>
-          <ScrollView style={styles.timePickerScroll} showsVerticalScrollIndicator={false}>
-            {minutes.map(m => (
-              <TouchableOpacity 
-                key={m} 
-                style={[
-                  styles.timeOption,
-                  minute === m && styles.selectedTimeOption
-                ]}
-                onPress={() => setMinute(m)}
-              >
-                <Text style={[
-                  styles.timeOptionText,
-                  minute === m && styles.selectedTimeOptionText
-                ]}>
-                  {m}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-      
-      <TouchableOpacity style={styles.confirmTimeButton} onPress={confirmTime}>
-        <Text style={styles.confirmTimeText}>Confirm</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-export function CreateHabitScreen() {
-  const navigation = useNavigation();
-  const [habit, setHabit] = useState('');
-  const [fromTime, setFromTime] = useState('');
-  const [toTime, setToTime] = useState('');
-  const [showFromTimePicker, setShowFromTimePicker] = useState(false);
-  const [showToTimePicker, setShowToTimePicker] = useState(false);
-  const [duration, setDuration] = useState('365');
-  const [days, setDays] = useState('everyday');
-  const [selectedDays, setSelectedDays] = useState([]);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showDurationPicker, setShowDurationPicker] = useState(false);
-  
-  const canFinish = habit.length > 0;
-  
-  // Calculate minutes between from and to time
-  const calculateMinutes = () => {
-    if (!fromTime || !toTime) return '45';
-    
-    const [fromHour, fromMinute] = fromTime.split(':').map(Number);
-    const [toHour, toMinute] = toTime.split(':').map(Number);
-    
-    let totalMinutes = (toHour * 60 + toMinute) - (fromHour * 60 + fromMinute);
-    if (totalMinutes < 0) totalMinutes += 24 * 60; // Handle overnight
-    
-    return totalMinutes.toString();
-  };
-  
-  const minutes = calculateMinutes();
-  
-  // Add habit function
-  const addHabit = () => {
-    // Here you would add the habit to your storage/database
-    // For now, we'll just navigate back
-    navigation.navigate('HabitList');
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.skip}>Skip</Text>
-
-      <Text style={styles.title}>Create habit</Text>
-      
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>I will </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="train BJJ..."
-          value={habit}
-          onChangeText={setHabit}
-          placeholderTextColor="#999"
-        />
-      </View>
-
-      <Text style={styles.sectionLabel}>set time</Text>
-      
-      <View style={styles.timeRow}>
-        <TouchableOpacity 
-          onPress={() => setShowFromTimePicker(true)} 
-          style={styles.timeSelector}
-        >
-          <Text style={styles.timeSelectorText}>
-            {fromTime || 'from'}
-          </Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.timeSeparator}>-</Text>
-        
-        <TouchableOpacity 
-          onPress={() => setShowToTimePicker(true)} 
-          style={styles.timeSelector}
-        >
-          <Text style={styles.timeSelectorText}>
-            {toTime || 'to'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.optionsRow}>
-        <TouchableOpacity
-          style={[styles.optionButton, days === 'everyday' && styles.optionButtonActive]}
-          onPress={() => setDays('everyday')}
-        >
-          <Text style={[styles.optionText, days === 'everyday' && styles.optionTextActive]}>
-            everyday
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.optionButton, days === 'custom' && styles.optionButtonActive]}
-          onPress={() => {
-            setDays('custom');
-            setShowCalendar(true);
-          }}
-        >
-          <Text style={[styles.optionText, days === 'custom' && styles.optionTextActive]}>
-            select days
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.optionsRow}>
-        <TouchableOpacity
-          style={[
-            styles.optionButton, 
-            duration === '365' && styles.optionButtonActive
-          ]}
-          onPress={() => {
-            setDuration('365');
-          }}
-        >
-          <Text style={[
-            styles.optionText,
-            duration === '365' && styles.optionTextActive
-          ]}>
-            365 days
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.optionButton,
-            duration !== '365' && styles.optionButtonActive
-          ]}
-          onPress={() => {
-            setShowDurationPicker(true);
-          }}
-        >
-          <Text style={[
-            styles.optionText,
-            duration !== '365' && styles.optionTextActive
-          ]}>
-            select duration
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.summaryContainer}>
-        <Text style={styles.summaryText}>
-          I will {habit || 'train BJJ'} for {minutes}min {days === 'everyday' ? 'everyday' : 'on selected days'} for {duration} days
-        </Text>
-        
-        <TouchableOpacity 
-          style={styles.addHabitButton}
-          onPress={addHabit}
-        >
-          <Text style={styles.addHabitText}>add habit +</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.finishButton, !canFinish && { opacity: 0.5 }]}
-          disabled={!canFinish}
-          onPress={() => navigation.navigate('HabitList')}
-        >
-          <Text style={styles.finishText}>Finish setup</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* From Time Picker Modal */}
-      <Modal
-        visible={showFromTimePicker}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <TimePicker 
-            title="Set Start Time"
-            onTimeSelected={setFromTime}
-            onClose={() => setShowFromTimePicker(false)}
-          />
-        </View>
-      </Modal>
-      
-      {/* To Time Picker Modal */}
-      <Modal
-        visible={showToTimePicker}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <TimePicker 
-            title="Set End Time"
-            onTimeSelected={setToTime}
-            onClose={() => setShowToTimePicker(false)}
-          />
-        </View>
-      </Modal>
-      
-      {/* Calendar Modal for Days */}
-      <Modal
-        visible={showCalendar}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <CalendarPicker 
-            title="Select Days"
-            selectedDays={selectedDays}
-            onDayPress={setSelectedDays}
-            onClose={() => setShowCalendar(false)}
-          />
-        </View>
-      </Modal>
-      
-      {/* Duration Picker Modal */}
-      <Modal
-        visible={showDurationPicker}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <DurationPicker 
-            onDurationSelected={setDuration}
-            onClose={() => setShowDurationPicker(false)}
-          />
-        </View>
-      </Modal>
-    </View>
-  );
+  )
 }
 
+// Set Timer component
+const TimerPicker = ({ selectedHours, selectedMinutes, onTimeSelected, onClose }) => {
+  const [hours, setHours] = useState(selectedHours || "00")
+  const [minutes, setMinutes] = useState(selectedMinutes || "45")
+
+  // Generate arrays for hour and minute options
+  const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"))
+  const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"))
+
+  const handleDone = () => {
+    onTimeSelected(hours, minutes)
+    onClose()
+  }
+
+  return (
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>set timer</Text>
+
+      <View style={styles.timePickerContainer}>
+        {/* Hours and Minutes columns with separator */}
+        <View style={styles.timePickerColumnsContainer}>
+          {/* Hours column */}
+          <View style={styles.timePickerColumn}>
+            <ScrollView
+              style={styles.timePickerScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timePickerScrollContent}
+            >
+              {hoursArray.map((hour) => (
+                <TouchableOpacity
+                  key={`hour-${hour}`}
+                  style={[styles.timeOption, hours === hour && styles.selectedTimeOption]}
+                  onPress={() => setHours(hour)}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      hours === hour ? styles.selectedTimeText : styles.unselectedTimeText,
+                    ]}
+                  >
+                    {hour}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Separator */}
+          <View style={styles.timeSeparator}>
+            <Text style={styles.timeSeparatorText}>:</Text>
+          </View>
+
+          {/* Minutes column */}
+          <View style={styles.timePickerColumn}>
+            <ScrollView
+              style={styles.timePickerScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timePickerScrollContent}
+            >
+              {minutesArray.map((minute) => (
+                <TouchableOpacity
+                  key={`minute-${minute}`}
+                  style={[styles.timeOption, minutes === minute && styles.selectedTimeOption]}
+                  onPress={() => setMinutes(minute)}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      minutes === minute ? styles.selectedTimeText : styles.unselectedTimeText,
+                    ]}
+                  >
+                    {minute}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
+        <Text style={styles.doneButtonText}>Done</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+// Routine Planner component (from/to time selection)
+const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSelected, onClose }) => {
+  const [tempFromHours, setTempFromHours] = useState(fromHours || "13")
+  const [tempFromMinutes, setTempFromMinutes] = useState(fromMinutes || "45")
+  const [tempToHours, setTempToHours] = useState(toHours || "15")
+  const [tempToMinutes, setTempToMinutes] = useState(toMinutes || "45")
+
+  const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"))
+  const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"))
+
+  const handleDone = () => {
+    onTimeSelected(tempFromHours, tempFromMinutes, tempToHours, tempToMinutes)
+    onClose()
+  }
+
+  return (
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Plan routine</Text>
+
+      {/* From Time */}
+      <View style={styles.timePickerContainer}>
+        <Text style={styles.timeLabel}>from</Text>
+        <View style={styles.timePickerColumnsContainer}>
+          <View style={styles.timePickerColumn}>
+            <ScrollView
+              style={styles.timePickerScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timePickerScrollContent}
+            >
+              {hoursArray.map((hour) => (
+                <TouchableOpacity
+                  key={`from-hour-${hour}`}
+                  style={[styles.timeOption, tempFromHours === hour && styles.selectedTimeOption]}
+                  onPress={() => setTempFromHours(hour)}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      tempFromHours === hour ? styles.selectedTimeText : styles.unselectedTimeText,
+                    ]}
+                  >
+                    {hour}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <View style={styles.timeSeparator}>
+            <Text style={styles.timeSeparatorText}>:</Text>
+          </View>
+          <View style={styles.timePickerColumn}>
+            <ScrollView
+              style={styles.timePickerScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timePickerScrollContent}
+            >
+              {minutesArray.map((minute) => (
+                <TouchableOpacity
+                  key={`from-minute-${minute}`}
+                  style={[styles.timeOption, tempFromMinutes === minute && styles.selectedTimeOption]}
+                  onPress={() => setTempFromMinutes(minute)}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      tempFromMinutes === minute ? styles.selectedTimeText : styles.unselectedTimeText,
+                    ]}
+                  >
+                    {minute}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </View>
+
+      {/* To Time */}
+      <View style={styles.timePickerContainer}>
+        <Text style={styles.timeLabel}>to</Text>
+        <View style={styles.timePickerColumnsContainer}>
+          <View style={styles.timePickerColumn}>
+            <ScrollView
+              style={styles.timePickerScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timePickerScrollContent}
+            >
+              {hoursArray.map((hour) => (
+                <TouchableOpacity
+                  key={`to-hour-${hour}`}
+                  style={[styles.timeOption, tempToHours === hour && styles.selectedTimeOption]}
+                  onPress={() => setTempToHours(hour)}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      tempToHours === hour ? styles.selectedTimeText : styles.unselectedTimeText,
+                    ]}
+                  >
+                    {hour}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <View style={styles.timeSeparator}>
+            <Text style={styles.timeSeparatorText}>:</Text>
+          </View>
+          <View style={styles.timePickerColumn}>
+            <ScrollView
+              style={styles.timePickerScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.timePickerScrollContent}
+            >
+              {minutesArray.map((minute) => (
+                <TouchableOpacity
+                  key={`to-minute-${minute}`}
+                  style={[styles.timeOption, tempToMinutes === minute && styles.selectedTimeOption]}
+                  onPress={() => setTempToMinutes(minute)}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      tempToMinutes === minute ? styles.selectedTimeText : styles.unselectedTimeText,
+                    ]}
+                  >
+                    {minute}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
+        <Text style={styles.doneButtonText}>Save</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+export function CreateHabitScreen() {
+  const navigation = useNavigation()
+  const [habit, setHabit] = useState("")
+  const [timeOption, setTimeOption] = useState("")
+  const [frequencyOption, setFrequencyOption] = useState("")
+  const [durationOption, setDurationOption] = useState("")
+  const [selectedDays, setSelectedDays] = useState([])
+  const [showDaysModal, setShowDaysModal] = useState(false)
+  const [showDurationModal, setShowDurationModal] = useState(false)
+  const [habitCreated, setHabitCreated] = useState(false)
+  const [habits, setHabits] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // State for both time options
+  // "Set Timer" states
+  const [showTimerModal, setShowTimerModal] = useState(false)
+  const [selectedHours, setSelectedHours] = useState("00")
+  const [selectedMinutes, setSelectedMinutes] = useState("45")
+
+  // "Plan Routine" states
+  const [showRoutineModal, setShowRoutineModal] = useState(false)
+  const [fromHours, setFromHours] = useState("13")
+  const [fromMinutes, setFromMinutes] = useState("45")
+  const [toHours, setToHours] = useState("15")
+  const [toMinutes, setToMinutes] = useState("45")
+
+  const handleSelectDays = (days) => {
+    setSelectedDays(days)
+    if (days.length > 0) {
+      setFrequencyOption("select days")
+    }
+  }
+
+  const handleSelectDuration = (duration) => {
+    setDurationOption(duration)
+    setShowDurationModal(false)
+  }
+
+  // Handler for timer selection
+  const handleSelectTimer = (hours, minutes) => {
+    setSelectedHours(hours)
+    setSelectedMinutes(minutes)
+    setTimeOption("set timer")
+    setShowTimerModal(false)
+  }
+
+  // Handler for routine selection
+  const handleSelectRoutine = (fHours, fMinutes, tHours, tMinutes) => {
+    setFromHours(fHours)
+    setFromMinutes(fMinutes)
+    setToHours(tHours)
+    setToMinutes(tMinutes)
+    setTimeOption("plan routine")
+    setShowRoutineModal(false)
+  }
+
+  // Function to save habit to Firebase
+  const saveHabitToFirestore = async (habitData) => {
+    try {
+      const auth = getAuth()
+      const user = auth.currentUser
+
+      if (!user) {
+        console.log("No user is signed in")
+        return { success: false, error: "User not authenticated" }
+      }
+
+      const db = getFirestore()
+
+      // Add user ID to the habit data
+      const habitWithUser = {
+        ...habitData,
+        userId: user.uid,
+        createdAt: new Date(),
+        completedDays: [],
+        streak: 0,
+        active: true,
+      }
+
+      // Add to Firestore
+      const docRef = await addDoc(collection(db, "habits"), habitWithUser)
+      console.log("Habit saved with ID:", docRef.id)
+
+      return {
+        success: true,
+        habitId: docRef.id,
+      }
+    } catch (error) {
+      console.error("Error saving habit:", error)
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+  }
+
+  // Modified addHabit function to save to Firebase
+  const addHabit = async () => {
+    if (habit) {
+      setIsLoading(true)
+
+      try {
+        let timeDisplay = "(time)"
+
+        // Format time based on selection
+        if (timeOption === "set timer") {
+          const hoursVal = Number.parseInt(selectedHours)
+          const minutesVal = Number.parseInt(selectedMinutes)
+
+          if (hoursVal > 0 && minutesVal > 0) {
+            timeDisplay = `${hoursVal}h ${minutesVal}m`
+          } else if (hoursVal > 0) {
+            timeDisplay = `${hoursVal}h`
+          } else if (minutesVal > 0) {
+            timeDisplay = `${minutesVal}m`
+          } else {
+            timeDisplay = "0m"
+          }
+        } else if (timeOption === "plan routine") {
+          timeDisplay = `from ${fromHours}:${fromMinutes} to ${toHours}:${toMinutes}`
+        }
+
+        const newHabit = {
+          name: habit,
+          time: timeDisplay,
+          frequency:
+            frequencyOption === "everyday"
+              ? "everyday"
+              : frequencyOption === "select days" && selectedDays.length > 0
+                ? selectedDays.join(", ")
+                : "(days)",
+          duration: durationOption || "(duration)",
+        }
+
+        // Save to Firebase
+        const result = await saveHabitToFirestore(newHabit)
+
+        if (result.success) {
+          // Add the Firebase ID to the habit object
+          newHabit.id = result.habitId
+
+          // Update local state
+          setHabits([...habits, newHabit])
+          setHabitCreated(true)
+
+          // Reset form for next habit
+          setHabit("")
+          setTimeOption("")
+          setFrequencyOption("")
+          setDurationOption("")
+          setSelectedDays([])
+          setSelectedHours("00")
+          setSelectedMinutes("45")
+          setFromHours("13")
+          setFromMinutes("45")
+          setToHours("15")
+          setToMinutes("45")
+
+          Alert.alert("Success", "Habit saved to database!")
+        } else {
+          Alert.alert("Error", "Failed to save habit: " + (result.error || "Unknown error"))
+        }
+      } catch (error) {
+        console.error("Error in addHabit:", error)
+        Alert.alert("Error", "An unexpected error occurred.")
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      Alert.alert("Error", "Please enter a habit name.")
+    }
+  }
+
+  // Generate summary text based on selected options
+  const getSummaryText = () => {
+    const habitText = habit || "(habit)"
+    let timeText = "(time)"
+
+    // Format time text based on selection
+    if (timeOption === "set timer") {
+      const hoursVal = Number.parseInt(selectedHours)
+      const minutesVal = Number.parseInt(selectedMinutes)
+
+      const hoursText = hoursVal > 0 ? (hoursVal === 1 ? "1 hour" : `${hoursVal} hours`) : ""
+
+      const minutesText = minutesVal > 0 ? (minutesVal === 1 ? "1 minute" : `${minutesVal} minutes`) : ""
+
+      if (hoursVal > 0 && minutesVal > 0) {
+        timeText = `for ${hoursText} ${minutesText}`
+      } else if (hoursVal > 0) {
+        timeText = `for ${hoursText}`
+      } else if (minutesVal > 0) {
+        timeText = `for ${minutesText}`
+      } else {
+        timeText = "for 0 minutes"
+      }
+    } else if (timeOption === "plan routine") {
+      timeText = `from ${fromHours}:${fromMinutes} to ${toHours}:${toMinutes}`
+    }
+
+    const daysText =
+      frequencyOption === "everyday"
+        ? "everyday"
+        : frequencyOption === "select days" && selectedDays.length > 0
+          ? selectedDays.join(", ")
+          : "(days)"
+    const durationText = durationOption || "(duration)"
+
+    return `I will ${habitText} ${timeText}, on ${daysText} for ${durationText}`
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Create habit</Text>
+
+        <View style={styles.inputContainer}>
+          <View style={styles.inputRow}>
+            <Text style={styles.inputPrefix}>I will </Text>
+            <TextInput
+              style={styles.input}
+              placeholder='"train BJJ"'
+              value={habit}
+              onChangeText={setHabit}
+              placeholderTextColor="rgba(0, 0, 0, 0.3)"
+            />
+          </View>
+        </View>
+
+        <Text style={styles.sectionLabel}>Time</Text>
+
+        <View style={styles.optionsRow}>
+          <TouchableOpacity
+            style={[styles.optionButton, timeOption === "set timer" && styles.activeOptionButton]}
+            onPress={() => {
+              setTimeOption("set timer")
+              setShowTimerModal(true)
+            }}
+          >
+            <Text style={[styles.optionText, timeOption === "set timer" && styles.activeOptionText]}>set timer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.optionButton, timeOption === "plan routine" && styles.activeOptionButton]}
+            onPress={() => {
+              setTimeOption("plan routine")
+              setShowRoutineModal(true)
+            }}
+          >
+            <Text style={[styles.optionText, timeOption === "plan routine" && styles.activeOptionText]}>
+              plan routine
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionLabel}>Frequency</Text>
+
+        <View style={styles.optionsRow}>
+          <TouchableOpacity
+            style={[styles.optionButton, frequencyOption === "everyday" && styles.activeOptionButton]}
+            onPress={() => setFrequencyOption("everyday")}
+          >
+            <Text style={[styles.optionText, frequencyOption === "everyday" && styles.activeOptionText]}>everyday</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.optionButton, frequencyOption === "select days" && styles.activeOptionButton]}
+            onPress={() => {
+              setFrequencyOption("select days")
+              setShowDaysModal(true)
+            }}
+          >
+            <Text style={[styles.optionText, frequencyOption === "select days" && styles.activeOptionText]}>
+              select days
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionLabel}>Duration</Text>
+
+        <View style={styles.optionsRow}>
+          <TouchableOpacity
+            style={[styles.optionButton, durationOption === "365 days" && styles.activeOptionButton]}
+            onPress={() => setDurationOption("365 days")}
+          >
+            <Text style={[styles.optionText, durationOption === "365 days" && styles.activeOptionText]}>365 days</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.optionButton,
+              durationOption !== "" && durationOption !== "365 days" && styles.activeOptionButton,
+            ]}
+            onPress={() => setShowDurationModal(true)}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                durationOption !== "" && durationOption !== "365 days" && styles.activeOptionText,
+              ]}
+            >
+              set duration
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.summaryContainer}>
+          <Text style={[styles.summaryText, habitCreated && styles.habitCreatedText]}>• {getSummaryText()}</Text>
+
+          <TouchableOpacity
+            style={[styles.addHabitButton, isLoading && styles.disabledButton]}
+            onPress={addHabit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="rgba(0, 0, 0, 0.6)" />
+                <Text style={styles.addHabitText}>Saving...</Text>
+              </View>
+            ) : (
+              <Text style={styles.addHabitText}>add habit +</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.finishButtonContainer}>
+          <TouchableOpacity
+            style={[styles.finishButton, habits.length === 0 && styles.disabledButton]}
+            onPress={() => habits.length > 0 && navigation.navigate("HabitList", { habits })}
+            disabled={habits.length === 0}
+          >
+            <Text style={[styles.finishButtonText, habits.length === 0 && styles.disabledButtonText]}>
+              Finish setup
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Days Selection Modal */}
+      <Modal visible={showDaysModal} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <DaysSelector
+            selectedDays={selectedDays}
+            onDayPress={handleSelectDays}
+            onClose={() => setShowDaysModal(false)}
+          />
+        </View>
+      </Modal>
+
+      {/* Duration Selection Modal */}
+      <Modal visible={showDurationModal} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <DurationSelector
+            selectedDuration={durationOption}
+            onDurationSelected={handleSelectDuration}
+            onClose={() => setShowDurationModal(false)}
+          />
+        </View>
+      </Modal>
+
+      {/* Timer Selection Modal */}
+      <Modal visible={showTimerModal} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <TimerPicker
+            selectedHours={selectedHours}
+            selectedMinutes={selectedMinutes}
+            onTimeSelected={handleSelectTimer}
+            onClose={() => setShowTimerModal(false)}
+          />
+        </View>
+      </Modal>
+
+      {/* Routine Selection Modal */}
+      <Modal visible={showRoutineModal} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <RoutinePlanner
+            fromHours={fromHours}
+            fromMinutes={fromMinutes}
+            toHours={toHours}
+            toMinutes={toMinutes}
+            onTimeSelected={handleSelectRoutine}
+            onClose={() => setShowRoutineModal(false)}
+          />
+        </View>
+      </Modal>
+    </SafeAreaView>
+  )
+}
+
+// Updated styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#FCFCFC",
   },
-  skip: {
-    marginTop: 20,
-    alignSelf: 'flex-end',
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000',
-    borderBottomWidth: 1,
-    borderBottomColor: '#000',
+  content: {
+    flex: 1,
+    padding: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: '400',
-    color: '#666',
+    fontFamily: "Inter-Medium",
+    fontWeight: "500",
+    color: "#000",
     marginTop: 40,
     marginBottom: 40,
+    lineHeight: 38.4,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 8,
-    marginBottom: 30,
+    marginBottom: 40,
   },
-  inputLabel: {
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  inputPrefix: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: "Inter-Light",
+    fontWeight: "300",
+    color: "rgba(0, 0, 0, 0.6)",
   },
   input: {
-    flex: 1,
     fontSize: 16,
-    color: '#000',
+    fontFamily: "Inter-Light",
+    fontWeight: "300",
+    color: "rgba(0, 0, 0, 0.6)",
     padding: 0,
   },
   sectionLabel: {
-    fontSize: 16,
-    color: '#808080',
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#D3D3D3',
-    marginBottom: 15,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  timeSelector: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 5,
-    flex: 1,
-  },
-  timeSelectorText: {
     fontSize: 14,
-    color: '#999',
-  },
-  timeSeparator: {
-    marginHorizontal: 10,
-    color: '#999',
+    fontFamily: "Inter-Light",
+    fontWeight: "300",
+    color: "rgba(0, 0, 0, 0.6)",
+    marginBottom: 8,
   },
   optionsRow: {
-    flexDirection: 'row',
-    marginBottom: 15,
-    gap: 20,
+    flexDirection: "row",
+    marginBottom: 20,
+    gap: 8,
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
   },
   optionButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    backgroundColor: '#F5F5F5',
-    minWidth: 100,
-    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
+    marginRight: 8,
+    marginBottom: 8,
+    alignItems: "center",
   },
-  optionButtonActive: {
-    backgroundColor: '#000',
+  activeOptionButton: {
+    backgroundColor: "#000",
+    borderColor: "#000",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   optionText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
+    textAlign: "center",
   },
-  optionTextActive: {
-    color: '#fff',
+  activeOptionText: {
+    color: "#fff",
   },
   summaryContainer: {
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 40,
   },
   summaryText: {
     fontSize: 14,
-    color: '#666',
+    fontFamily: "Inter-Light",
+    fontWeight: "300",
+    color: "rgba(0, 0, 0, 0.3)",
     lineHeight: 20,
-    marginBottom: 20,
+    marginBottom: 24,
+  },
+  habitCreatedText: {
+    color: "rgba(0, 0, 0, 0.6)",
   },
   addHabitButton: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 10,
+    alignSelf: "flex-start",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D3D3D3',
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   addHabitText: {
-    color: '#808080',
-    fontWeight: '400',
     fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
   },
-  buttonContainer: {
+  finishButtonContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    marginBottom: 20,
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+    paddingBottom: 20,
   },
   finishButton: {
-    alignSelf: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
   },
-  finishText: {
-    color: '#000',
-    fontSize: 14,
+  disabledButton: {
+    opacity: 0.5,
   },
-  // Modal styles
+  finishButtonText: {
+    fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
+  },
+  disabledButtonText: {
+    color: "rgba(0, 0, 0, 0.4)",
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  // Time picker styles
-  timePickerContainer: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
+  modalContent: {
+    width: "90%",
+    backgroundColor: "#FCFCFC",
+    borderRadius: 8,
+    padding: 24,
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 4,
   },
-  timePickerTitle: {
+  modalTitle: {
     fontSize: 18,
-    fontWeight: '500',
-    color: '#000',
-    marginBottom: 20,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "#000",
+    marginBottom: 24,
+    textAlign: "left",
   },
-  timePickerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timePickerColumn: {
-    alignItems: 'center',
-    width: 80,
-  },
-  timePickerLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
-  },
-  timePickerScroll: {
-    height: 150,
-  },
-  timeOption: {
-    padding: 10,
-    alignItems: 'center',
-  },
-  selectedTimeOption: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 5,
-  },
-  timeOptionText: {
-    fontSize: 18,
-    color: '#666',
-  },
-  selectedTimeOptionText: {
-    color: '#000',
-    fontWeight: '500',
-  },
-  timePickerSeparator: {
-    fontSize: 24,
-    marginHorizontal: 10,
-    color: '#666',
-  },
-  confirmTimeButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#000',
-    borderRadius: 10,
-  },
-  confirmTimeText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  // Calendar styles
-  calendarContainer: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-  },
-  calendarTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#000',
-    marginBottom: 20,
-  },
-  weekdaysContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+  daysGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    marginBottom: 24,
   },
   dayButton: {
-    margin: 5,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#F5F5F5',
-    width: 50,
-    alignItems: 'center',
+    margin: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
+    minWidth: 70,
+    alignItems: "center",
   },
   selectedDayButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
+    borderColor: "#000",
   },
   dayButtonText: {
-    color: '#666',
+    fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
   },
   selectedDayText: {
-    color: '#fff',
-    fontWeight: '500',
+    color: "#fff",
+  },
+  durationGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  durationButton: {
+    margin: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
+    width: "45%",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  selectedDurationButton: {
+    backgroundColor: "#000",
+    borderColor: "#000",
+  },
+  durationButtonText: {
+    fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
+  },
+  selectedDurationText: {
+    color: "#fff",
   },
   doneButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#000',
-    borderRadius: 10,
+    alignSelf: "flex-end",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
   },
   doneButtonText: {
-    color: '#fff',
     fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
   },
-  // Duration picker styles
-  durationPickerContainer: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
+  timePickerContainer: {
+    marginVertical: 10,
+    height: 150, // Reduced height for better fit
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  durationPickerTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#000',
-    marginBottom: 20,
+  timePickerColumnsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 150,
   },
-  durationOptionsContainer: {
-    width: '100%',
+  timePickerColumn: {
+    width: 60,
+    height: 150,
+    overflow: "hidden",
   },
-  durationOption: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    alignItems: 'center',
+  timePickerScrollView: {
+    height: 150,
   },
-  selectedDurationOption: {
-    backgroundColor: '#F5F5F5',
+  timePickerScrollContent: {
+    paddingVertical: 55, // Adjusted padding
   },
-  durationOptionText: {
+  timeOption: {
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  selectedTimeOption: {
+    // No additional styling needed
+  },
+  timeOptionText: {
     fontSize: 16,
-    color: '#666',
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
   },
-  selectedDurationOptionText: {
-    color: '#000',
-    fontWeight: '500',
+  selectedTimeText: {
+    color: "rgba(0, 0, 0, 0.6)",
   },
-  confirmDurationButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#000',
-    borderRadius: 10,
+  unselectedTimeText: {
+    color: "rgba(0, 0, 0, 0.2)",
   },
-  confirmDurationText: {
-    color: '#fff',
-    fontSize: 16,
+  timeSeparator: {
+    paddingHorizontal: 10,
   },
-});
+  timeSeparatorText: {
+    fontSize: 20,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
+  },
+  timeLabel: {
+    fontSize: 14,
+    fontFamily: "Inter-Light",
+    fontWeight: "300",
+    color: "rgba(0, 0, 0, 0.6)",
+    marginBottom: 8,
+    alignSelf: "flex-start",
+  },
+})

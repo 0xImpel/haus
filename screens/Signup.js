@@ -13,12 +13,9 @@ import {
   Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { app } from "../firebaseConfig";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 
-const auth = getAuth(app);
-
-const Signup = () => {
+export default function SignupScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +23,7 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const navigation = useNavigation();
+  const auth = getAuth();
 
   const validateFields = () => {
     let valid = true;
@@ -71,9 +69,11 @@ const Signup = () => {
       Alert.alert("Error", error.message);
     }
   };
+  
   const navigateToSignIn = () => {
     navigation.navigate("Signin");
   };
+  
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -88,6 +88,7 @@ const Signup = () => {
             <TextInput
               style={styles.input}
               placeholder="John"
+              placeholderTextColor="rgba(0, 0, 0, 0.6)"
               value={firstName}
               onChangeText={setFirstName}
             />
@@ -99,6 +100,7 @@ const Signup = () => {
             <TextInput
               style={styles.input}
               placeholder="Doe"
+              placeholderTextColor="rgba(0, 0, 0, 0.6)"
               value={lastName}
               onChangeText={setLastName}
             />
@@ -110,6 +112,7 @@ const Signup = () => {
             <TextInput
               style={styles.input}
               placeholder="johndoe@outlook.de"
+              placeholderTextColor="rgba(0, 0, 0, 0.6)"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
@@ -120,6 +123,7 @@ const Signup = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter password"
+              placeholderTextColor="rgba(0, 0, 0, 0.6)"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -132,6 +136,7 @@ const Signup = () => {
             <TextInput
               style={styles.input}
               placeholder="Re-enter password"
+              placeholderTextColor="rgba(0, 0, 0, 0.6)"
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -159,12 +164,12 @@ const Signup = () => {
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#FCFCFC',
   },
   scrollViewContainer: {
     padding: 22,
@@ -177,19 +182,21 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 40,
     fontSize: 24,
-    fontWeight: "600",
-    color: "#808080",
+    fontWeight: "400",
+    color: "#000",
     marginBottom: 30,
-    fontFamily: "Poppins_900Bold",
+    fontFamily: "Inter-Regular",
+    lineHeight: 38.4,
   },
   label: {
     fontSize: 14,
-    fontFamily: "Poppins",
-    color: "#333",
+    fontFamily: "Inter-Light",
+    fontWeight: "300",
+    color: "rgba(0, 0, 0, 0.6)",
     marginBottom: 10,
   },
   input: {
-    fontFamily: "Poppins",
+    fontFamily: "Inter",
     width: "100%",
     height: 53,
     paddingHorizontal: 15,
@@ -197,59 +204,61 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
     marginBottom: 15,
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.09,
-    shadowRadius: 4,
     borderBottomWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderTopWidth: 0,
-    borderColor: "#ddd",
+    borderColor: "rgba(0, 0, 0, 0.15)",
   },
   error: {
     color: "red",
     fontSize: 12,
-    fontFamily: "Poppins",
+    fontFamily: "Inter",
     marginBottom: 10,
   },
   createButton: {
-    backgroundColor: "#fff",
-    borderColor: "#D3D3D3",
+    backgroundColor: "#FCFCFC",
+    borderColor: "rgba(0, 0, 0, 0.15)",
     borderWidth: 1,
-    borderRadius: 10,
-    alignSelf: "flex-end", // align to right
+    borderRadius: 8,
+    alignSelf: "flex-end",
     paddingVertical: 12,
     paddingHorizontal: 20,
     marginTop: 10,
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
   },
   createButtonText: {
-    color: "#808080",
-    fontFamily: "Poppins_600SemiBold",
+    color: "rgba(0, 0, 0, 0.6)",
+    fontFamily: "Inter-Regular",
     fontSize: 16,
+    fontWeight: "400",
   },
-
   footerLine: {
     marginTop: 80,
     borderBottomWidth: 1,
-    borderBottomColor: "#D3D3D3",
+    borderBottomColor: "rgba(0, 0, 0, 0.15)",
     alignItems: "center",
-    width: "65%", // or adjust
+    width: "65%",
     alignSelf: "center",
   },
-
   Create: {
     fontSize: 14,
-    fontFamily: "Poppins",
-    color: "#000000",
+    fontFamily: "Inter",
+    color: "rgba(0, 0, 0, 0.6)",
   },
   login: {
     fontSize: 14,
-    fontFamily: "Poppins",
+    fontFamily: "Inter-Regular",
     color: "#000000",
-    fontWeight: "600",
+    fontWeight: "400",
   },
 });
-
-export default Signup;
