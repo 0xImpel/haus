@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client"
+
+import { useState } from "react"
 import {
   View,
   Text,
@@ -11,74 +13,71 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+} from "react-native"
+import { useNavigation } from "@react-navigation/native"
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"
 
 export default function SignupScreen() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState({});
-  const navigation = useNavigation();
-  const auth = getAuth();
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [errors, setErrors] = useState({})
+  const navigation = useNavigation()
+  const auth = getAuth()
 
   const validateFields = () => {
-    let valid = true;
-    let newErrors = {};
+    let valid = true
+    const newErrors = {}
 
     if (!firstName.trim()) {
-      newErrors.firstName = "First name is required.";
-      valid = false;
+      newErrors.firstName = "First name is required."
+      valid = false
     }
     if (!lastName.trim()) {
-      newErrors.lastName = "Last name is required.";
-      valid = false;
+      newErrors.lastName = "Last name is required."
+      valid = false
     }
     if (!email.trim()) {
-      newErrors.email = "Email is required.";
-      valid = false;
+      newErrors.email = "Email is required."
+      valid = false
     } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      newErrors.email = "Please enter a valid email.";
-      valid = false;
+      newErrors.email = "Please enter a valid email."
+      valid = false
     }
     if (!password.trim()) {
-      newErrors.password = "Password is required.";
-      valid = false;
+      newErrors.password = "Password is required."
+      valid = false
     }
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match.";
-      valid = false;
+      newErrors.confirmPassword = "Passwords do not match."
+      valid = false
     }
 
-    setErrors(newErrors);
-    return valid;
-  };
+    setErrors(newErrors)
+    return valid
+  }
 
   const handleCreateAccount = async () => {
-    if (!validateFields()) return;
+    if (!validateFields()) return
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert("Success", "Account created successfully!");
-      navigation.navigate("CreateHabit"); 
+      await createUserWithEmailAndPassword(auth, email, password)
+      Alert.alert("Success", "Account created successfully!")
+      navigation.navigate("CreateHabit")
     } catch (error) {
-      console.log(error);
-      Alert.alert("Error", error.message);
+      console.log(error)
+      Alert.alert("Error", error.message)
     }
-  };
-  
+  }
+
   const navigateToSignIn = () => {
-    navigation.navigate("Signin");
-  };
-  
+    navigation.navigate("Signin")
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollViewContainer}>
           <View style={styles.formContainer}>
@@ -92,9 +91,7 @@ export default function SignupScreen() {
               value={firstName}
               onChangeText={setFirstName}
             />
-            {errors.firstName && (
-              <Text style={styles.error}>{errors.firstName}</Text>
-            )}
+            {errors.firstName && <Text style={styles.error}>{errors.firstName}</Text>}
 
             <Text style={styles.label}>Last Name</Text>
             <TextInput
@@ -104,9 +101,7 @@ export default function SignupScreen() {
               value={lastName}
               onChangeText={setLastName}
             />
-            {errors.lastName && (
-              <Text style={styles.error}>{errors.lastName}</Text>
-            )}
+            {errors.lastName && <Text style={styles.error}>{errors.lastName}</Text>}
 
             <Text style={styles.label}>Email</Text>
             <TextInput
@@ -128,9 +123,7 @@ export default function SignupScreen() {
               value={password}
               onChangeText={setPassword}
             />
-            {errors.password && (
-              <Text style={styles.error}>{errors.password}</Text>
-            )}
+            {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
             <Text style={styles.label}>Confirm Password</Text>
             <TextInput
@@ -141,14 +134,9 @@ export default function SignupScreen() {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
-            {errors.confirmPassword && (
-              <Text style={styles.error}>{errors.confirmPassword}</Text>
-            )}
+            {errors.confirmPassword && <Text style={styles.error}>{errors.confirmPassword}</Text>}
 
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={handleCreateAccount}
-            >
+            <TouchableOpacity style={styles.createButton} onPress={handleCreateAccount}>
               <Text style={styles.createButtonText}>Create Account</Text>
             </TouchableOpacity>
             <View style={styles.footerLine}>
@@ -163,13 +151,13 @@ export default function SignupScreen() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FCFCFC',
+    backgroundColor: "#FCFCFC",
   },
   scrollViewContainer: {
     padding: 22,
@@ -204,16 +192,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
     marginBottom: 15,
-    shadowColor: "rgba(0, 0, 0, 0.15)",
-    shadowOffset: { width: 0, height: 0.8 },
-    shadowOpacity: 1,
-    shadowRadius: 1,
-    elevation: 2,
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderTopWidth: 0,
-    borderColor: "rgba(0, 0, 0, 0.15)",
+    // Removed shadows as requested
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)", // Black with 15% opacity as requested
+    color: "rgba(0, 0, 0, 0.6)", // Black with 60% opacity as requested
   },
   error: {
     color: "red",
@@ -261,4 +243,4 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontWeight: "400",
   },
-});
+})

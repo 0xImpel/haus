@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client"
+
+import { useState } from "react"
 import {
   View,
   Text,
@@ -11,69 +13,65 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import Icon from "react-native-vector-icons/FontAwesome";
+} from "react-native"
+import { useNavigation } from "@react-navigation/native"
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth"
+import Icon from "react-native-vector-icons/FontAwesome"
 
 export default function SigninScreen({ route }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({ email: "", password: "" });
-  const params = route?.params;
-  const navigation = useNavigation();
-  const auth = getAuth();
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState({ email: "", password: "" })
+  const params = route?.params
+  const navigation = useNavigation()
+  const auth = getAuth()
 
   const validateEmail = (email) => {
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
     if (!email.trim()) {
-      setErrors((prev) => ({ ...prev, email: "Email is required." }));
-      return false;
+      setErrors((prev) => ({ ...prev, email: "Email is required." }))
+      return false
     } else if (!emailPattern.test(email)) {
       setErrors((prev) => ({
         ...prev,
         email: "Please enter a valid email address.",
-      }));
-      return false;
+      }))
+      return false
     }
-    setErrors((prev) => ({ ...prev, email: "" }));
-    return true;
-  };
+    setErrors((prev) => ({ ...prev, email: "" }))
+    return true
+  }
 
   const validatePassword = (password) => {
     if (!password.trim()) {
-      setErrors((prev) => ({ ...prev, password: "Password is required." }));
-      return false;
+      setErrors((prev) => ({ ...prev, password: "Password is required." }))
+      return false
     }
-    setErrors((prev) => ({ ...prev, password: "" }));
-    return true;
-  };
+    setErrors((prev) => ({ ...prev, password: "" }))
+    return true
+  }
 
   const handleContinue = async () => {
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-    if (!isEmailValid || !isPasswordValid) return;
+    const isEmailValid = validateEmail(email)
+    const isPasswordValid = validatePassword(password)
+    if (!isEmailValid || !isPasswordValid) return
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
       if (user) {
-        navigation.navigate("CreateHabit");
+        navigation.navigate("CreateHabit")
       }
     } catch (error) {
-      console.log(error);
-      Alert.alert("Login Failed", "Invalid email or password.");
+      console.log(error)
+      Alert.alert("Login Failed", "Invalid email or password.")
     }
-  };
+  }
 
   const navigateToSignUp = () => {
-    navigation.navigate("Signup", params);
-  };
+    navigation.navigate("Signup", params)
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -96,9 +94,7 @@ export default function SigninScreen({ route }) {
                 keyboardType="email-address"
                 onBlur={() => validateEmail(email)}
               />
-              {errors.email && (
-                <Text style={styles.errorText}>{errors.email}</Text>
-              )}
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
               <View style={styles.passwordContainer}>
                 <TextInput
@@ -110,34 +106,22 @@ export default function SigninScreen({ route }) {
                   secureTextEntry={!showPassword}
                   onBlur={() => validatePassword(password)}
                 />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword((prev) => !prev)}
-                >
-                  <Icon
-                    name={showPassword ? "eye-slash" : "eye"}
-                    size={20}
-                    color="rgba(0, 0, 0, 0.6)"
-                  />
+                <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword((prev) => !prev)}>
+                  <Icon name={showPassword ? "eye-slash" : "eye"} size={20} color="rgba(0, 0, 0, 0.6)" />
                 </TouchableOpacity>
               </View>
 
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              )}
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
               <Text style={styles.ForgotPass}>Forgot Password?</Text>
-              <TouchableOpacity
-                style={styles.continueButton}
-                onPress={handleContinue}
-              >
+              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
                 <Text style={styles.continueButtonText}>Login</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-      
+
       {/* Footer placed outside KeyboardAvoidingView to prevent it from moving with keyboard */}
       <View style={styles.footerContainer}>
         <View style={styles.footerTextWrapper}>
@@ -151,20 +135,20 @@ export default function SigninScreen({ route }) {
         </View>
       </View>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FCFCFC',
+    backgroundColor: "#FCFCFC",
   },
   keyboardAvoidingContainer: {
     flex: 1,
   },
   container: {
     flex: 1,
-    backgroundColor: '#FCFCFC',
+    backgroundColor: "#FCFCFC",
   },
   contentContainer: {
     flex: 1,
@@ -199,16 +183,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
     marginBottom: 15,
-    shadowColor: "rgba(0, 0, 0, 0.15)",
-    shadowOffset: { width: 0, height: 0.8 },
-    shadowOpacity: 1,
-    shadowRadius: 1,
-    elevation: 2,
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderTopWidth: 0,
-    borderColor: "rgba(0, 0, 0, 0.15)",
+    // Removed shadows as requested
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)", // Black with 15% opacity as requested
+    color: "rgba(0, 0, 0, 0.6)", // Black with 60% opacity as requested
   },
   passwordContainer: {
     position: "relative",
@@ -251,7 +229,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: '#FCFCFC',
+    backgroundColor: "#FCFCFC",
   },
   footerTextWrapper: {
     borderBottomWidth: 1,
@@ -266,4 +244,4 @@ const styles = StyleSheet.create({
     fontFamily: "Inter",
     fontWeight: "400",
   },
-});
+})

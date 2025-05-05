@@ -104,6 +104,7 @@ const TimerPicker = ({ selectedHours, selectedMinutes, onTimeSelected, onClose }
               style={styles.timePickerScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.timePickerScrollContent}
+              scrollEnabled={true}
             >
               {hoursArray.map((hour) => (
                 <TouchableOpacity
@@ -135,6 +136,7 @@ const TimerPicker = ({ selectedHours, selectedMinutes, onTimeSelected, onClose }
               style={styles.timePickerScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.timePickerScrollContent}
+              scrollEnabled={true}
             >
               {minutesArray.map((minute) => (
                 <TouchableOpacity
@@ -165,39 +167,46 @@ const TimerPicker = ({ selectedHours, selectedMinutes, onTimeSelected, onClose }
 }
 
 // Routine Planner component (from/to time selection)
-const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSelected, onClose }) => {
+const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSelected, onClose, step = "from" }) => {
   const [tempFromHours, setTempFromHours] = useState(fromHours || "13")
   const [tempFromMinutes, setTempFromMinutes] = useState(fromMinutes || "45")
   const [tempToHours, setTempToHours] = useState(toHours || "15")
   const [tempToMinutes, setTempToMinutes] = useState(toMinutes || "45")
+  const [currentStep, setCurrentStep] = useState(step)
 
   const hoursArray = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"))
   const minutesArray = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"))
 
-  const handleDone = () => {
-    onTimeSelected(tempFromHours, tempFromMinutes, tempToHours, tempToMinutes)
-    onClose()
+  const handleNext = () => {
+    if (currentStep === "from") {
+      setCurrentStep("to")
+    } else {
+      onTimeSelected(tempFromHours, tempFromMinutes, tempToHours, tempToMinutes)
+      onClose()
+    }
   }
 
   return (
     <View style={styles.modalContent}>
       <Text style={styles.modalTitle}>Plan routine</Text>
 
-      {/* From Time */}
+      {/* From Time - Always visible */}
       <View style={styles.timePickerContainer}>
         <Text style={styles.timeLabel}>from</Text>
-        <View style={styles.timePickerColumnsContainer}>
+        <View style={[styles.timePickerColumnsContainer, { opacity: currentStep === "from" ? 1 : 0.5 }]}>
           <View style={styles.timePickerColumn}>
             <ScrollView
               style={styles.timePickerScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.timePickerScrollContent}
+              scrollEnabled={currentStep === "from"}
             >
               {hoursArray.map((hour) => (
                 <TouchableOpacity
                   key={`from-hour-${hour}`}
                   style={[styles.timeOption, tempFromHours === hour && styles.selectedTimeOption]}
-                  onPress={() => setTempFromHours(hour)}
+                  onPress={() => currentStep === "from" && setTempFromHours(hour)}
+                  disabled={currentStep !== "from"}
                 >
                   <Text
                     style={[
@@ -219,12 +228,14 @@ const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSele
               style={styles.timePickerScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.timePickerScrollContent}
+              scrollEnabled={currentStep === "from"}
             >
               {minutesArray.map((minute) => (
                 <TouchableOpacity
                   key={`from-minute-${minute}`}
                   style={[styles.timeOption, tempFromMinutes === minute && styles.selectedTimeOption]}
-                  onPress={() => setTempFromMinutes(minute)}
+                  onPress={() => currentStep === "from" && setTempFromMinutes(minute)}
+                  disabled={currentStep !== "from"}
                 >
                   <Text
                     style={[
@@ -244,18 +255,20 @@ const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSele
       {/* To Time */}
       <View style={styles.timePickerContainer}>
         <Text style={styles.timeLabel}>to</Text>
-        <View style={styles.timePickerColumnsContainer}>
+        <View style={[styles.timePickerColumnsContainer, { opacity: currentStep === "to" ? 1 : 0.5 }]}>
           <View style={styles.timePickerColumn}>
             <ScrollView
               style={styles.timePickerScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.timePickerScrollContent}
+              scrollEnabled={currentStep === "to"}
             >
               {hoursArray.map((hour) => (
                 <TouchableOpacity
                   key={`to-hour-${hour}`}
                   style={[styles.timeOption, tempToHours === hour && styles.selectedTimeOption]}
-                  onPress={() => setTempToHours(hour)}
+                  onPress={() => currentStep === "to" && setTempToHours(hour)}
+                  disabled={currentStep !== "to"}
                 >
                   <Text
                     style={[
@@ -277,12 +290,14 @@ const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSele
               style={styles.timePickerScrollView}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.timePickerScrollContent}
+              scrollEnabled={currentStep === "to"}
             >
               {minutesArray.map((minute) => (
                 <TouchableOpacity
                   key={`to-minute-${minute}`}
                   style={[styles.timeOption, tempToMinutes === minute && styles.selectedTimeOption]}
-                  onPress={() => setTempToMinutes(minute)}
+                  onPress={() => currentStep === "to" && setTempToMinutes(minute)}
+                  disabled={currentStep !== "to"}
                 >
                   <Text
                     style={[
@@ -299,8 +314,8 @@ const RoutinePlanner = ({ fromHours, fromMinutes, toHours, toMinutes, onTimeSele
         </View>
       </View>
 
-      <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
-        <Text style={styles.doneButtonText}>Save</Text>
+      <TouchableOpacity style={styles.saveButton} onPress={handleNext}>
+        <Text style={styles.saveButtonText}>{currentStep === "from" ? "Next" : "Save"}</Text>
       </TouchableOpacity>
     </View>
   )
@@ -331,6 +346,7 @@ export function CreateHabitScreen() {
   const [fromMinutes, setFromMinutes] = useState("45")
   const [toHours, setToHours] = useState("15")
   const [toMinutes, setToMinutes] = useState("45")
+  const [routineStep, setRoutineStep] = useState("from")
 
   const handleSelectDays = (days) => {
     setSelectedDays(days)
@@ -360,6 +376,7 @@ export function CreateHabitScreen() {
     setToMinutes(tMinutes)
     setTimeOption("plan routine")
     setShowRoutineModal(false)
+    setRoutineStep("from")
   }
 
   // Function to save habit to Firebase
@@ -552,6 +569,7 @@ export function CreateHabitScreen() {
             style={[styles.optionButton, timeOption === "plan routine" && styles.activeOptionButton]}
             onPress={() => {
               setTimeOption("plan routine")
+              setRoutineStep("from")
               setShowRoutineModal(true)
             }}
           >
@@ -688,6 +706,7 @@ export function CreateHabitScreen() {
             toMinutes={toMinutes}
             onTimeSelected={handleSelectRoutine}
             onClose={() => setShowRoutineModal(false)}
+            step={routineStep}
           />
         </View>
       </Modal>
@@ -735,7 +754,7 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: 12, // Smaller font size as requested
     fontFamily: "Inter-Light",
     fontWeight: "300",
     color: "rgba(0, 0, 0, 0.6)",
@@ -785,7 +804,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   summaryText: {
-    fontSize: 14,
+    fontSize: 12, // Smaller font size as requested
     fontFamily: "Inter-Light",
     fontWeight: "300",
     color: "rgba(0, 0, 0, 0.3)",
@@ -893,6 +912,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FCFCFC",
     minWidth: 70,
     alignItems: "center",
+    shadowColor: "rgba(0, 0, 0, 0.15)", // Consistent shadow
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
   },
   selectedDayButton: {
     backgroundColor: "#000",
@@ -902,7 +926,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter-Regular",
     fontWeight: "400",
-    color: "rgba(0, 0, 0, 0.6)",
+    color: "rgba(0, 0, 0, 0.15)", // Text color at 15% opacity as requested
   },
   selectedDayText: {
     color: "#fff",
@@ -910,7 +934,7 @@ const styles = StyleSheet.create({
   durationGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "flex-start", // Changed to align with left edge
     marginBottom: 24,
   },
   durationButton: {
@@ -921,9 +945,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.15)",
     backgroundColor: "#FCFCFC",
-    width: "45%",
+    width: "40%", // Smaller width as requested
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 8, // Reduced margin as requested
+    marginRight: 8, // Added to maintain spacing
+    shadowColor: "rgba(0, 0, 0, 0.15)", // Consistent shadow
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
   },
   selectedDurationButton: {
     backgroundColor: "#000",
@@ -933,7 +963,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter-Regular",
     fontWeight: "400",
-    color: "rgba(0, 0, 0, 0.6)",
+    color: "rgba(0, 0, 0, 0.15)", // Text color at 15% opacity as requested
   },
   selectedDurationText: {
     color: "#fff",
@@ -946,6 +976,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.15)",
     backgroundColor: "#FCFCFC",
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  saveButton: {
+    alignSelf: "flex-end",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.15)",
+    backgroundColor: "#FCFCFC",
+    shadowColor: "rgba(0, 0, 0, 0.15)",
+    shadowOffset: { width: 0, height: 0.8 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontFamily: "Inter-Regular",
+    fontWeight: "400",
+    color: "rgba(0, 0, 0, 0.6)",
   },
   doneButtonText: {
     fontSize: 16,
@@ -955,7 +1010,7 @@ const styles = StyleSheet.create({
   },
   timePickerContainer: {
     marginVertical: 10,
-    height: 150, // Reduced height for better fit
+    height: 150,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
@@ -975,7 +1030,7 @@ const styles = StyleSheet.create({
     height: 150,
   },
   timePickerScrollContent: {
-    paddingVertical: 55, // Adjusted padding
+    paddingVertical: 55,
   },
   timeOption: {
     height: 40,
@@ -983,7 +1038,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedTimeOption: {
-    // No additional styling needed
+    backgroundColor: "rgba(0, 0, 0, 0.05)", // Added visible selected time bar
+    borderRadius: 4,
   },
   timeOptionText: {
     fontSize: 16,
@@ -997,7 +1053,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 0, 0, 0.2)",
   },
   timeSeparator: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12, // Added 12px margin as requested
   },
   timeSeparatorText: {
     fontSize: 20,
