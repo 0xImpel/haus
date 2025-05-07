@@ -347,6 +347,8 @@ export function CreateHabitScreen() {
   const [toHours, setToHours] = useState("15")
   const [toMinutes, setToMinutes] = useState("45")
   const [routineStep, setRoutineStep] = useState("from")
+  const [selectingFrom, setSelectingFrom] = useState(true); // NEW FLAG
+
 
   const handleSelectDays = (days) => {
     setSelectedDays(days)

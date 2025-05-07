@@ -445,8 +445,8 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginTop: 8, // Same margin as between habit items
-    width: 32, // Square and smaller as requested
-    height: 32, // Match the height of habit items (adjusted)
+    width: 40, // Square button
+    height: 40, // Match the height of habit items
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.15)",
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 1,
     // Second shadow
-    shadowColor: "rgba(0, 0, 0, 0.1)",
+    shadowColor: "rgba(0, 0, 0, 0.15)",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 5,

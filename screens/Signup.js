@@ -87,7 +87,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               placeholder="John"
-              placeholderTextColor="rgba(0, 0, 0, 0.6)"
+              placeholderTextColor="rgba(0, 0, 0, 0.25)"
               value={firstName}
               onChangeText={setFirstName}
             />
@@ -97,7 +97,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               placeholder="Doe"
-              placeholderTextColor="rgba(0, 0, 0, 0.6)"
+              placeholderTextColor="rgba(0, 0, 0, 0.25)"
               value={lastName}
               onChangeText={setLastName}
             />
@@ -107,7 +107,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               placeholder="johndoe@outlook.de"
-              placeholderTextColor="rgba(0, 0, 0, 0.6)"
+              placeholderTextColor="rgba(0, 0, 0, 0.25)"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
@@ -118,7 +118,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               placeholder="Enter password"
-              placeholderTextColor="rgba(0, 0, 0, 0.6)"
+              placeholderTextColor="rgba(0, 0, 0, 0.25)"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
@@ -129,7 +129,7 @@ export default function SignupScreen() {
             <TextInput
               style={styles.input}
               placeholder="Re-enter password"
-              placeholderTextColor="rgba(0, 0, 0, 0.6)"
+              placeholderTextColor="rgba(0, 0, 0, 0.25)"
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
