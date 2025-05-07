@@ -88,7 +88,7 @@ export default function SigninScreen({ route }) {
               <TextInput
                 style={styles.input}
                 placeholder="Email or Username"
-                placeholderTextColor="rgba(0, 0, 0, 0.6)"
+                placeholderTextColor="rgba(0, 0, 0, 0.25)"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -100,7 +100,7 @@ export default function SigninScreen({ route }) {
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor="rgba(0, 0, 0, 0.6)"
+                  placeholderTextColor="rgba(0, 0, 0, 0.25)"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
